@@ -16,6 +16,29 @@
 #include "c.h"
 
 #include "nodes/pg_list.h"
+
+#ifdef _MSC_VER
+/*
+ * Override the list_make_*_cell macros: the upstream versions use C99
+ * compound literals with designated initializers ({.field = value}),
+ * which MSVC rejects in C++17 mode.  Replace with MSVC-compatible inline
+ * helper functions.
+ */
+#undef list_make_ptr_cell
+#undef list_make_int_cell
+#undef list_make_oid_cell
+#undef list_make_xid_cell
+
+static inline ListCell pg_make_ptr_cell(void *v)         { ListCell c; c.ptr_value = v;  return c; }
+static inline ListCell pg_make_int_cell(int v)            { ListCell c; c.int_value = v;  return c; }
+static inline ListCell pg_make_oid_cell(Oid v)            { ListCell c; c.oid_value = v;  return c; }
+static inline ListCell pg_make_xid_cell(TransactionId v)  { ListCell c; c.xid_value = v; return c; }
+
+#define list_make_ptr_cell(v) pg_make_ptr_cell((void *)(v))
+#define list_make_int_cell(v) pg_make_int_cell(v)
+#define list_make_oid_cell(v) pg_make_oid_cell(v)
+#define list_make_xid_cell(v) pg_make_xid_cell(v)
+#endif /* _MSC_VER */
 /*
  * Remove the original definition of foreach_delete_current so we can redefine
  * it below in a way that works for the easier to use foreach_* macros.

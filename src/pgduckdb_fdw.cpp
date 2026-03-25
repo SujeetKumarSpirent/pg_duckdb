@@ -58,7 +58,7 @@ static const struct PGDuckDBFdwOption valid_md_options[] = {
 
 PG_FUNCTION_INFO_V1(pgduckdb_fdw_handler);
 Datum
-pgduckdb_fdw_handler(PG_FUNCTION_ARGS __attribute__((unused))) {
+pgduckdb_fdw_handler(PG_FUNCTION_ARGS pg_attribute_unused()) {
 	PG_RETURN_POINTER(nullptr);
 }
 
@@ -262,11 +262,10 @@ ValidateMotherduckServerFdw(List *options_list, Oid context) {
 
 void
 RecordDependencyOnMDServer(ObjectAddress *object_address) {
-	ObjectAddress server_address = {
-	    .classId = ForeignServerRelationId,
-	    .objectId = GetMotherduckForeignServerOid(),
-	    .objectSubId = 0,
-	};
+	ObjectAddress server_address;
+	server_address.classId = ForeignServerRelationId;
+	server_address.objectId = GetMotherduckForeignServerOid();
+	server_address.objectSubId = 0;
 	recordDependencyOn(object_address, &server_address, DEPENDENCY_NORMAL);
 }
 

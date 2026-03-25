@@ -422,72 +422,60 @@ duckdb_scan_sample_next_tuple(TableScanDesc /*scan*/, SampleScanState * /*scanst
  * ------------------------------------------------------------------------
  */
 
-static const TableAmRoutine duckdb_methods = {.type = T_TableAmRoutine,
-
-                                              .slot_callbacks = duckdb_slot_callbacks,
-
-                                              .scan_begin = duckdb_scan_begin,
-                                              .scan_end = duckdb_scan_end,
-                                              .scan_rescan = duckdb_scan_rescan,
-                                              .scan_getnextslot = duckdb_scan_getnextslot,
-
-                                              /* optional callbacks */
-                                              .scan_set_tidrange = NULL,
-                                              .scan_getnextslot_tidrange = NULL,
-
-                                              /* these are common helper functions */
-                                              .parallelscan_estimate = table_block_parallelscan_estimate,
-                                              .parallelscan_initialize = table_block_parallelscan_initialize,
-                                              .parallelscan_reinitialize = table_block_parallelscan_reinitialize,
-
-                                              .index_fetch_begin = duckdb_index_fetch_begin,
-                                              .index_fetch_reset = duckdb_index_fetch_reset,
-                                              .index_fetch_end = duckdb_index_fetch_end,
-                                              .index_fetch_tuple = duckdb_index_fetch_tuple,
-
-                                              .tuple_fetch_row_version = duckdb_fetch_row_version,
-                                              .tuple_tid_valid = duckdb_tuple_tid_valid,
-                                              .tuple_get_latest_tid = duckdb_get_latest_tid,
-                                              .tuple_satisfies_snapshot = duckdb_tuple_satisfies_snapshot,
-                                              .index_delete_tuples = duckdb_index_delete_tuples,
-
-                                              .tuple_insert = duckdb_tuple_insert,
-                                              .tuple_insert_speculative = duckdb_tuple_insert_speculative,
-                                              .tuple_complete_speculative = duckdb_tuple_complete_speculative,
-                                              .multi_insert = duckdb_multi_insert,
-                                              .tuple_delete = duckdb_tuple_delete,
-                                              .tuple_update = duckdb_tuple_update,
-                                              .tuple_lock = duckdb_tuple_lock,
-                                              .finish_bulk_insert = duckdb_finish_bulk_insert,
-
+static const TableAmRoutine duckdb_methods = []() {
+	TableAmRoutine m{};
+	m.type = T_TableAmRoutine;
+	m.slot_callbacks = duckdb_slot_callbacks;
+	m.scan_begin = duckdb_scan_begin;
+	m.scan_end = duckdb_scan_end;
+	m.scan_rescan = duckdb_scan_rescan;
+	m.scan_getnextslot = duckdb_scan_getnextslot;
+	/* optional callbacks — NULL already from zero-init */
+	m.parallelscan_estimate = table_block_parallelscan_estimate;
+	m.parallelscan_initialize = table_block_parallelscan_initialize;
+	m.parallelscan_reinitialize = table_block_parallelscan_reinitialize;
+	m.index_fetch_begin = duckdb_index_fetch_begin;
+	m.index_fetch_reset = duckdb_index_fetch_reset;
+	m.index_fetch_end = duckdb_index_fetch_end;
+	m.index_fetch_tuple = duckdb_index_fetch_tuple;
+	m.tuple_fetch_row_version = duckdb_fetch_row_version;
+	m.tuple_tid_valid = duckdb_tuple_tid_valid;
+	m.tuple_get_latest_tid = duckdb_get_latest_tid;
+	m.tuple_satisfies_snapshot = duckdb_tuple_satisfies_snapshot;
+	m.index_delete_tuples = duckdb_index_delete_tuples;
+	m.tuple_insert = duckdb_tuple_insert;
+	m.tuple_insert_speculative = duckdb_tuple_insert_speculative;
+	m.tuple_complete_speculative = duckdb_tuple_complete_speculative;
+	m.multi_insert = duckdb_multi_insert;
+	m.tuple_delete = duckdb_tuple_delete;
+	m.tuple_update = duckdb_tuple_update;
+	m.tuple_lock = duckdb_tuple_lock;
+	m.finish_bulk_insert = duckdb_finish_bulk_insert;
 #if PG_VERSION_NUM >= 160000
-                                              .relation_set_new_filelocator = duckdb_relation_set_new_filelocator,
+	m.relation_set_new_filelocator = duckdb_relation_set_new_filelocator;
 #else
-                                              .relation_set_new_filenode = duckdb_relation_set_new_filenode,
+	m.relation_set_new_filenode = duckdb_relation_set_new_filenode;
 #endif
-                                              .relation_nontransactional_truncate =
-                                                  duckdb_relation_nontransactional_truncate,
-                                              .relation_copy_data = duckdb_copy_data,
-                                              .relation_copy_for_cluster = duckdb_copy_for_cluster,
-                                              .relation_vacuum = duckdb_vacuum,
-                                              .scan_analyze_next_block = duckdb_scan_analyze_next_block,
-                                              .scan_analyze_next_tuple = duckdb_scan_analyze_next_tuple,
-                                              .index_build_range_scan = duckdb_index_build_range_scan,
-                                              .index_validate_scan = duckdb_index_validate_scan,
-
-                                              .relation_size = duckdb_relation_size,
-                                              .relation_needs_toast_table = duckdb_relation_needs_toast_table,
-                                              /* can be null because relation_needs_toast_table returns false */
-                                              .relation_toast_am = NULL,
-                                              .relation_fetch_toast_slice = NULL,
-
-                                              .relation_estimate_size = duckdb_estimate_rel_size,
+	m.relation_nontransactional_truncate = duckdb_relation_nontransactional_truncate;
+	m.relation_copy_data = duckdb_copy_data;
+	m.relation_copy_for_cluster = duckdb_copy_for_cluster;
+	m.relation_vacuum = duckdb_vacuum;
+	m.scan_analyze_next_block = duckdb_scan_analyze_next_block;
+	m.scan_analyze_next_tuple = duckdb_scan_analyze_next_tuple;
+	m.index_build_range_scan = duckdb_index_build_range_scan;
+	m.index_validate_scan = duckdb_index_validate_scan;
+	m.relation_size = duckdb_relation_size;
+	m.relation_needs_toast_table = duckdb_relation_needs_toast_table;
+	/* relation_toast_am, relation_fetch_toast_slice — NULL already from zero-init */
+	m.relation_estimate_size = duckdb_estimate_rel_size;
 #if PG_VERSION_NUM < 180000
-                                              .scan_bitmap_next_block = duckdb_scan_bitmap_next_block,
+	m.scan_bitmap_next_block = duckdb_scan_bitmap_next_block;
 #endif
-                                              .scan_bitmap_next_tuple = duckdb_scan_bitmap_next_tuple,
-                                              .scan_sample_next_block = duckdb_scan_sample_next_block,
-                                              .scan_sample_next_tuple = duckdb_scan_sample_next_tuple};
+	m.scan_bitmap_next_tuple = duckdb_scan_bitmap_next_tuple;
+	m.scan_sample_next_block = duckdb_scan_sample_next_block;
+	m.scan_sample_next_tuple = duckdb_scan_sample_next_tuple;
+	return m;
+}();
 
 Datum
 duckdb_am_handler(FunctionCallInfo /*funcinfo*/) {
@@ -498,7 +486,7 @@ duckdb_am_handler(FunctionCallInfo /*funcinfo*/) {
 static duckdb::unordered_map<const TableAmRoutine * /*am*/, duckdb::string /*name*/> duckdb_table_ams = {
     {&duckdb_methods, "duckdb"}};
 
-extern "C" __attribute__((visibility("default"))) bool
+extern "C" PGDLLEXPORT bool
 RegisterDuckdbTableAm(const char *name, const TableAmRoutine *am) {
 	return duckdb_table_ams.emplace(am, name).second;
 }

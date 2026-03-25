@@ -23,8 +23,10 @@
 #include "pgduckdb/pg/string_utils.hpp"
 #include <string>
 #include <unordered_map>
+#ifndef _WIN32
 #include <sys/file.h>
 #include <fcntl.h>
+#endif
 
 extern "C" {
 #include "postgres.h"
@@ -405,6 +407,14 @@ If the lock is taken, the function returns true. If the lock is not taken, the f
 */
 bool
 CanTakeBgwLockForDatabase(Oid database_oid) {
+#ifdef _WIN32
+	/*
+	 * flock(2) is not available on Windows.  For now, allow all background
+	 * workers to run; a proper Windows implementation using LockFileEx would
+	 * be needed if multiple workers for the same database become a concern.
+	 */
+	return true;
+#else
 	char lock_file_name[MAXPGPATH];
 	snprintf(lock_file_name, MAXPGPATH, "%s/%s.pgduckdb_worker.%d", DataDir, PG_TEMP_FILE_PREFIX, database_oid);
 
@@ -424,6 +434,7 @@ CanTakeBgwLockForDatabase(Oid database_oid) {
 	}
 
 	return true;
+#endif
 }
 
 void
@@ -1135,11 +1146,10 @@ CreateSchemaIfNotExists(const char *postgres_schema_name, bool is_default_db) {
 			return false;
 		}
 
-		ObjectAddress schema_address = {
-		    .classId = NamespaceRelationId,
-		    .objectId = schema_oid,
-		    .objectSubId = 0,
-		};
+		ObjectAddress schema_address;
+		schema_address.classId = NamespaceRelationId;
+		schema_address.objectId = schema_oid;
+		schema_address.objectSubId = 0;
 		RecordDependencyOnMDServer(&schema_address);
 	}
 

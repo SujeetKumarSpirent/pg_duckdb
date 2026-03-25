@@ -214,7 +214,7 @@ PostgresTableReader::ParallelWorkerNumber(Cardinality cardinality) {
 	if (cardinality <= cardinality_threshold) {
 		return 1;
 	}
-	return std::min(duckdb_max_workers_per_postgres_scan, max_parallel_workers);
+	return (std::min)(duckdb_max_workers_per_postgres_scan, max_parallel_workers);
 }
 
 bool

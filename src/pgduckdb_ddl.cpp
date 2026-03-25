@@ -1046,11 +1046,10 @@ DuckdbHandleViewStmtPost(Node *parsetree) {
 
 	SPI_finish();
 
-	ObjectAddress view_address = {
-	    .classId = RelationRelationId,
-	    .objectId = relid,
-	    .objectSubId = 0,
-	};
+	ObjectAddress view_address;
+	view_address.classId = RelationRelationId;
+	view_address.objectId = relid;
+	view_address.objectSubId = 0;
 	pgduckdb::RecordDependencyOnMDServer(&view_address);
 	ATExecChangeOwner(relid, pgduckdb::MotherDuckPostgresUserOid(), false, AccessExclusiveLock);
 
@@ -1323,11 +1322,10 @@ DECLARE_PG_FUNCTION(duckdb_create_table_trigger) {
 			elog(ERROR, "SPI_exec failed: error code %s", SPI_result_code_string(ret));
 		}
 
-		ObjectAddress table_address = {
-		    .classId = RelationRelationId,
-		    .objectId = relid,
-		    .objectSubId = 0,
-		};
+		ObjectAddress table_address;
+		table_address.classId = RelationRelationId;
+		table_address.objectId = relid;
+		table_address.objectSubId = 0;
 		pgduckdb::RecordDependencyOnMDServer(&table_address);
 		ATExecChangeOwner(relid, pgduckdb::MotherDuckPostgresUserOid(), false, AccessExclusiveLock);
 	}

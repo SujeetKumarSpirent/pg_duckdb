@@ -27,7 +27,9 @@ extern "C" {
 
 #include "pgduckdb/pgduckdb_ruleutils.h"
 
-#if PG_VERSION_NUM >= 180000
+#include "nodes/extensible.h"
+
+#if PG_VERSION_NUM >= 160000
 #include "executor/executor.h"
 #endif
 }
@@ -149,6 +151,16 @@ check_view_perms_recursive(Query *query) {
 		return;
 	}
 
+#if PG_VERSION_NUM >= 170000
+	/*
+	 * In PG17, ExecCheckOneRelPerms was removed. ExecCheckPermissions checks
+	 * all RTEPermissionInfos for the entire query level at once.
+	 */
+	if (query->rteperminfos != NIL) {
+		ExecCheckPermissions(query->rtable, query->rteperminfos, true);
+	}
+#endif
+
 	foreach (lc, query->rtable) {
 		RangeTblEntry *rte = lfirst_node(RangeTblEntry, lc);
 
@@ -159,7 +171,7 @@ check_view_perms_recursive(Query *query) {
 				aclcheck_error(ACLCHECK_NO_PRIV, OBJECT_VIEW, get_rel_name(rte->relid));
 			}
 		}
-#else
+#elif PG_VERSION_NUM < 170000
 		if (rte->perminfoindex != 0 && rte->relkind == RELKIND_VIEW) {
 			RTEPermissionInfo *perminfo = getRTEPermissionInfo(query->rteperminfos, rte);
 			bool result = ExecCheckOneRelPerms(perminfo);

@@ -1,7 +1,9 @@
 
 #pragma once
 
+#ifndef _WIN32
 #include <signal.h>
+#endif
 
 namespace pgduckdb {
 
@@ -18,7 +20,9 @@ public:
 
 private:
 	bool _blocked;
+#ifndef _WIN32
 	sigset_t _saved_set;
+#endif
 };
 
 } // namespace pgduckdb

@@ -33,7 +33,13 @@ COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) -c
 endif
 
 ifndef COMPILE.cc
+# PostgreSQL MSVC builds set CXX to empty and CC to cl. When CXX is empty,
+# fall back to CC with -TP (force C++ mode in cl.exe).
+ifeq ($(CXX),)
+COMPILE.cc = $(CC) -TP $(CXXFLAGS) $(CPPFLAGS) -c
+else
 COMPILE.cc = $(CXX) $(CXXFLAGS) $(CPPFLAGS) -c
+endif
 endif
 
 DEPDIR = .deps
@@ -43,11 +49,19 @@ ifeq ($(GCC), yes)
 # GCC allows us to create object and dependency file in one invocation.
 %.o : %.c
 	@if test ! -d $(DEPDIR); then mkdir -p $(DEPDIR); fi
-	$(COMPILE.c) -o $@ $< -MMD -MP -MF $(DEPDIR)/$(*F).Po
+	MSYS2_ARG_CONV_EXCL=* $(COMPILE.c) -o $@ $< -MMD -MP -MF $(DEPDIR)/$(*F).Po
 
 %.o : %.cpp
 	@if test ! -d $(DEPDIR); then mkdir -p $(DEPDIR); fi
-	$(COMPILE.cc) -o $@ $< -MMD -MP -MF $(DEPDIR)/$(*F).Po
+	MSYS2_ARG_CONV_EXCL=* $(COMPILE.cc) -o $@ $< -MMD -MP -MF $(DEPDIR)/$(*F).Po
+
+else # not GCC — assume cl.exe via MSYS2, suppress path conversion
+
+%.o : %.c
+	MSYS2_ARG_CONV_EXCL=* $(COMPILE.c) -Fo$@ $<
+
+%.o : %.cpp
+	MSYS2_ARG_CONV_EXCL=* $(COMPILE.cc) -Fo$@ $<
 
 endif # GCC
 

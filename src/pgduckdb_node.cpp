@@ -14,6 +14,7 @@ extern "C" {
 #include "miscadmin.h"
 #include "tcop/pquery.h"
 #include "nodes/params.h"
+#include "nodes/extensible.h"
 #include "utils/ruleutils.h"
 }
 

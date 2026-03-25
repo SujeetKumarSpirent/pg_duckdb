@@ -240,13 +240,15 @@ DuckdbRowSubscriptExecSetup(const SubscriptingRef *sbsref, SubscriptingRefState 
 	DuckdbSubscriptExecSetup(sbsref, sbsrefstate, methods, "duckdb.row");
 }
 
-static SubscriptRoutines duckdb_row_subscript_routines = {
-    .transform = DuckdbRowSubscriptTransform,
-    .exec_setup = DuckdbRowSubscriptExecSetup,
-    .fetch_strict = false,
-    .fetch_leakproof = true,
-    .store_leakproof = true,
-};
+static SubscriptRoutines duckdb_row_subscript_routines = []() {
+	SubscriptRoutines r{};
+	r.transform = DuckdbRowSubscriptTransform;
+	r.exec_setup = DuckdbRowSubscriptExecSetup;
+	r.fetch_strict = false;
+	r.fetch_leakproof = true;
+	r.store_leakproof = true;
+	return r;
+}();
 
 void
 DuckdbUnresolvedTypeSubscriptTransform(SubscriptingRef *sbsref, List *indirection, struct ParseState *pstate,
@@ -260,13 +262,15 @@ DuckdbUnresolvedTypeSubscriptExecSetup(const SubscriptingRef *sbsref, Subscripti
 	DuckdbSubscriptExecSetup(sbsref, sbsrefstate, methods, "duckdb.unresolved_type");
 }
 
-static SubscriptRoutines duckdb_unresolved_type_subscript_routines = {
-    .transform = DuckdbUnresolvedTypeSubscriptTransform,
-    .exec_setup = DuckdbUnresolvedTypeSubscriptExecSetup,
-    .fetch_strict = false,
-    .fetch_leakproof = true,
-    .store_leakproof = true,
-};
+static SubscriptRoutines duckdb_unresolved_type_subscript_routines = []() {
+	SubscriptRoutines r{};
+	r.transform = DuckdbUnresolvedTypeSubscriptTransform;
+	r.exec_setup = DuckdbUnresolvedTypeSubscriptExecSetup;
+	r.fetch_strict = false;
+	r.fetch_leakproof = true;
+	r.store_leakproof = true;
+	return r;
+}();
 
 void
 DuckdbStructSubscriptTransform(SubscriptingRef *sbsref, List *indirection, struct ParseState *pstate, bool is_slice,
@@ -280,13 +284,15 @@ DuckdbStructSubscriptExecSetup(const SubscriptingRef *sbsref, SubscriptingRefSta
 	DuckdbSubscriptExecSetup(sbsref, sbsrefstate, methods, "duckdb.struct");
 }
 
-static SubscriptRoutines duckdb_struct_subscript_routines = {
-    .transform = DuckdbStructSubscriptTransform,
-    .exec_setup = DuckdbStructSubscriptExecSetup,
-    .fetch_strict = false,
-    .fetch_leakproof = true,
-    .store_leakproof = true,
-};
+static SubscriptRoutines duckdb_struct_subscript_routines = []() {
+	SubscriptRoutines r{};
+	r.transform = DuckdbStructSubscriptTransform;
+	r.exec_setup = DuckdbStructSubscriptExecSetup;
+	r.fetch_strict = false;
+	r.fetch_leakproof = true;
+	r.store_leakproof = true;
+	return r;
+}();
 
 void
 DuckdbMapSubscriptTransform(SubscriptingRef *sbsref, List *indirection, struct ParseState *pstate, bool is_slice,
@@ -300,13 +306,15 @@ DuckdbMapSubscriptExecSetup(const SubscriptingRef *sbsref, SubscriptingRefState 
 	DuckdbSubscriptExecSetup(sbsref, sbsrefstate, methods, "duckdb.map");
 }
 
-static SubscriptRoutines duckdb_map_subscript_routines = {
-    .transform = DuckdbMapSubscriptTransform,
-    .exec_setup = DuckdbMapSubscriptExecSetup,
-    .fetch_strict = false,
-    .fetch_leakproof = true,
-    .store_leakproof = true,
-};
+static SubscriptRoutines duckdb_map_subscript_routines = []() {
+	SubscriptRoutines r{};
+	r.transform = DuckdbMapSubscriptTransform;
+	r.exec_setup = DuckdbMapSubscriptExecSetup;
+	r.fetch_strict = false;
+	r.fetch_leakproof = true;
+	r.store_leakproof = true;
+	return r;
+}();
 
 } // namespace pg
 

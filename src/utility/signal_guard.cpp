@@ -4,7 +4,12 @@
 
 namespace pgduckdb {
 
-ThreadSignalBlockGuard::ThreadSignalBlockGuard() : _blocked(false), _saved_set() {
+ThreadSignalBlockGuard::ThreadSignalBlockGuard() : _blocked(false)
+#ifndef _WIN32
+	, _saved_set()
+#endif
+{
+#ifndef _WIN32
 	sigset_t new_set;
 	if (sigfillset(&new_set) < 0) {
 		throw std::runtime_error("sigfillset() failed");
@@ -16,6 +21,7 @@ ThreadSignalBlockGuard::ThreadSignalBlockGuard() : _blocked(false), _saved_set()
 	}
 
 	_blocked = true;
+#endif
 }
 
 ThreadSignalBlockGuard::~ThreadSignalBlockGuard() {
@@ -28,10 +34,12 @@ ThreadSignalBlockGuard::unblock() {
 		return;
 	}
 
+#ifndef _WIN32
 	const int err = pthread_sigmask(SIG_SETMASK, &_saved_set, /*old_set*/ nullptr);
 	if (err != 0) {
 		throw std::runtime_error("pthread_sigmask(SIG_SETMASK) failed");
 	}
+#endif
 
 	_blocked = false;
 }

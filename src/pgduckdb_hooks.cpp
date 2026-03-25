@@ -16,6 +16,7 @@ extern "C" {
 #include "nodes/nodeFuncs.h"
 #include "nodes/print.h"
 #include "nodes/primnodes.h"
+#include "nodes/extensible.h"
 #include "tcop/utility.h"
 #include "tcop/pquery.h"
 #include "utils/rel.h"

@@ -8,6 +8,22 @@
 
 #include <setjmp.h>
 
+#ifdef _WIN32
+// PostgreSQL's c.h maps sigjmp_buf → jmp_buf on native Windows (non-MinGW64).
+// <setjmp.h> on MSVC only provides jmp_buf; supply the alias here so that
+// the declarations below and the PgExceptionGuard members compile cleanly.
+#ifndef sigjmp_buf
+#define sigjmp_buf   jmp_buf
+#define sigsetjmp(x, s) setjmp(x)
+#define siglongjmp   longjmp
+#endif
+// PostgreSQL exports globals from its DLL; we must match the __declspec(dllimport)
+// in the official headers or MSVC C2370 ("different storage class") fires.
+#define PGDUCKDB_PG_IMPORT __declspec(dllimport)
+#else
+#define PGDUCKDB_PG_IMPORT
+#endif
+
 #include "pgduckdb/utility/cpp_only_file.hpp" // Must be last include.
 
 extern "C" {
@@ -19,9 +35,9 @@ struct MemoryContextData;
 typedef struct MemoryContextData *MemoryContext;
 typedef char *pg_stack_base_t;
 
-extern sigjmp_buf *PG_exception_stack;
-extern MemoryContext CurrentMemoryContext;
-extern ErrorContextCallback *error_context_stack;
+extern PGDUCKDB_PG_IMPORT sigjmp_buf *PG_exception_stack;
+extern PGDUCKDB_PG_IMPORT MemoryContext CurrentMemoryContext;
+extern PGDUCKDB_PG_IMPORT ErrorContextCallback *error_context_stack;
 extern ErrorData *CopyErrorData();
 extern void FlushErrorState();
 extern pg_stack_base_t set_stack_base();
