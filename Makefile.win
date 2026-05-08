@@ -46,8 +46,11 @@ ifeq ($(DUCKDB_BUILD), ReleaseStatic)
 	FULL_DUCKDB_LIB = $(DUCKDB_BUILD_DIR)/libduckdb_bundle.lib
 	PG_DUCKDB_LINK_FLAGS = $(FULL_DUCKDB_LIB) libcurl.lib
 else
-	FULL_DUCKDB_LIB = $(DUCKDB_BUILD_DIR)/src/duckdb.lib
-	PG_DUCKDB_LINK_FLAGS = duckdb.lib
+	# Use the static library so all internal DuckDB symbols are available.
+	# The DLL import library (duckdb.lib) only exports DUCKDB_API-marked symbols,
+	# but pg_duckdb uses many internal DuckDB APIs.
+	FULL_DUCKDB_LIB = $(DUCKDB_BUILD_DIR)/src/duckdb_static.lib
+	PG_DUCKDB_LINK_FLAGS = duckdb_static.lib
 endif
 
 
@@ -98,6 +101,13 @@ override PG_CXXFLAGS += -std:c++17 -EHsc $(DUCKDB_BUILD_CXX_FLAGS) $(COMPILER_FL
 # declarations to be anywhere is even a good thing for those as we can keep our
 # changes to the vendored code in one place.
 override PG_CFLAGS += -wd4101
+# Force dynamic CRT (/MD) to match DuckDB's static library and the PostgreSQL
+# DLL convention. Without an explicit flag cl.exe defaults to /MT (static CRT),
+# which conflicts with duckdb_static.lib (built with /MD) and causes LNK2038.
+ifneq ($(GCC),yes)
+override PG_CXXFLAGS += -MD
+override PG_CFLAGS += -MD
+endif
 
 SHLIB_LINK += $(PG_DUCKDB_LINK_FLAGS)
 
@@ -128,8 +138,29 @@ $(shlib): $(FULL_DUCKDB_LIB) $(OBJS)
 		/IMPLIB:$(patsubst %.dll,%.lib,$(shlib)) \
 		/INCREMENTAL:NO /STACK:4194304 \
 		/LIBPATH:$(DUCKDB_BUILD_DIR)/src \
+		/LIBPATH:$(DUCKDB_BUILD_DIR)/extension/parquet \
+		/LIBPATH:$(DUCKDB_BUILD_DIR)/extension/core_functions \
+		/LIBPATH:$(DUCKDB_BUILD_DIR)/third_party/fmt \
+		/LIBPATH:$(DUCKDB_BUILD_DIR)/third_party/libpg_query \
+		/LIBPATH:$(DUCKDB_BUILD_DIR)/third_party/miniz \
+		/LIBPATH:$(DUCKDB_BUILD_DIR)/third_party/utf8proc \
+		/LIBPATH:$(DUCKDB_BUILD_DIR)/third_party/re2 \
+		/LIBPATH:$(DUCKDB_BUILD_DIR)/third_party/hyperloglog \
+		/LIBPATH:$(DUCKDB_BUILD_DIR)/third_party/skiplist \
+		/LIBPATH:$(DUCKDB_BUILD_DIR)/third_party/fastpforlib \
+		/LIBPATH:$(DUCKDB_BUILD_DIR)/third_party/fsst \
+		/LIBPATH:$(DUCKDB_BUILD_DIR)/third_party/yyjson \
+		/LIBPATH:$(DUCKDB_BUILD_DIR)/third_party/mbedtls \
+		/LIBPATH:$(DUCKDB_BUILD_DIR)/third_party/zstd \
 		/LIBPATH:$(PG_LIB) \
-		duckdb.lib postgres.lib ws2_32.lib
+		duckdb_static.lib \
+		parquet_extension.lib \
+		core_functions_extension.lib \
+		duckdb_fmt.lib duckdb_pg_query.lib duckdb_miniz.lib \
+		duckdb_utf8proc.lib duckdb_re2.lib duckdb_hyperloglog.lib \
+		duckdb_skiplistlib.lib duckdb_fastpforlib.lib duckdb_fsst.lib \
+		duckdb_yyjson.lib duckdb_mbedtls.lib duckdb_zstd.lib \
+		postgres.lib ws2_32.lib liblz4.lib rstrtmgr.lib
 endif
 
 # Only pass the version define to the one file that needs it, so that ccache
@@ -193,7 +224,16 @@ ifeq ($(DUCKDB_BUILD), ReleaseStatic)
 install-duckdb: $(FULL_DUCKDB_LIB) $(shlib)
 else
 install-duckdb: $(FULL_DUCKDB_LIB) $(shlib)
+ifneq ($(GCC),yes)
+	# MSVC build: install pg_duckdb.dll and extension files manually.
+	# PGXS install macros (INSTALL_SHLIB, INSTALL_DATA) may not be set in MSVC builds.
+	cp -f $(shlib) '$(DESTDIR)$(pkglibdir)/$(shlib)'
+	mkdir -p '$(DESTDIR)$(datadir)/extension'
+	cp -f pg_duckdb.control '$(DESTDIR)$(datadir)/extension/'
+	cp -f $(wildcard sql/pg_duckdb--*.sql) '$(DESTDIR)$(datadir)/extension/'
+else
 	$(install_bin) -m 755 $(FULL_DUCKDB_LIB) $(DESTDIR)$(PG_LIB)
+endif
 endif
 
 clean-duckdb:
